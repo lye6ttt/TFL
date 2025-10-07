@@ -10,9 +10,11 @@
 \usepackage{hyperref}
 \usepackage{multicol}
 \usepackage{mathtools}
+\usepackage{amssymb}
 \usepackage{enumitem}
 \usepackage{tikz}
 \usetikzlibrary{automata, positioning, arrows.meta}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 
 
 
@@ -317,6 +319,7 @@ $c \rightarrow \varepsilon$
 \end{center}
 т.к. она сохраняет те же классы эквивалентности.
 % -------------------------------------------------------------------------------------
+\newpage
 \section{Тестирование}
 
 
@@ -325,6 +328,126 @@ $c \rightarrow \varepsilon$
 %       ФАЗЗ-ТЕСТИРОВАНИЕ
 % ==============================
 \subsection{Фазз-тестирование эквивалентности}
+
+Фазз-тестирование проводится следующим образом: 
+\begin{enumerate} [parsep=-1pt]
+    \item генерируется случайная строка $\w$;
+    \item строится случайная цепочка по правилам SRS $\T$ в $\w'$;
+    \item выбираем наименьшее из $\w$ и $\w'$, согласно выбранному 
+    фундированному порядку при построении $\T'$;
+    \item смотрим множество слов, которые можно получить из меньшего слова в 
+    SRS $\T'$;
+    \item проверяем, можно ли из большего слова получить элемент ранее найденного
+    множества по SRS $\T'$ --- если да, то $\w$ и $\w'$ эквивалентны.
+\end{enumerate}
+Исходный код программы представлен в файле <<fuzzer.hs>>. \\\\
+Ниже представлен псевдокод самых важных функций:
+
+\begin{algorithm}[H]
+\DontPrintSemicolon
+
+\SetKwFunction{FGenerate}{generateRandomString}
+\SetKwFunction{FFindAll}{findAllOccurrences}
+\SetKwFunction{FReplace}{replaceSubstring}
+\SetKwFunction{FNext}{getNextStates}
+\SetKwFunction{FRandom}{randomlyTransform}
+\SetKwFunction{FReach}{findAllReachable}
+\SetKwFunction{FCheck}{checkIntersection}
+\SetKwFunction{FMain}{main}
+\SetKwProg{Fn}{}{:}{конец}
+
+% -------------------------------------------------------------------------------------
+\Fn{\FFindAll{pattern, text}}{
+    positions $\leftarrow$ пустой список \;
+    \For{$i \leftarrow 0$ \KwTo $|text|-|pattern|$}{
+        \If{подстрока text[i..] начинается с pattern}{
+            добавить $i$ в positions \;
+        }
+    }
+    \Return positions \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FReplace{idx, len, replacement, str}}{
+    before $\leftarrow$ str[0 : idx] \;
+    after $\leftarrow$ str[idx + len :] \;
+    \Return before $+$ replacement $+$ after \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FNext{str, rules}}{
+    result $\leftarrow \varnothing$ \;
+    \ForEach{(lhs, rhs) $\in$ srs}{
+        indices $\leftarrow$ \FFindAll{lhs, str} \;
+        \ForEach{idx $\in$ indices}{
+            newStr $\leftarrow$ \FReplace{idx, |lhs|, rhs, str} \;
+            добавить newStr в result \;
+        }
+    }
+    \Return result \;
+}
+
+\end{algorithm}
+
+\begin{algorithm}[H]
+\DontPrintSemicolon
+
+\SetKwProg{Fn}{}{:}{конец}
+% -------------------------------------------------------------------------------------
+\Fn{\FReach{startStr, rules}}{
+    visited $\leftarrow \{startStr\}$ \;
+    queue $\leftarrow$ очередь со startStr \;
+    \While{queue $\neq \varnothing$}{
+        current $\leftarrow$ queue.Dequeue() \;
+        newStrings $\leftarrow$ \FNext{current, rules} \;
+        unvisited $\leftarrow$ newStrings $\setminus$ visited \;
+        visited $\leftarrow$ visited $\cup$ unvisited \;
+        queue.Enqueue(unvisited) \;
+    }
+    \Return visited \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FCheck{startStr, rules, targetSet}}{ 
+    \If{startStr $\in$ targetSet}{
+        \Return True \;
+    }
+    visited $\leftarrow \{startStr\}$ \;
+    queue $\leftarrow$ очередь со startStr \;
+    \While{queue $\neq \varnothing$}{
+        current $\leftarrow$ queue.Dequeue() \;
+        newStrings $\leftarrow$ \FNext{current, rules} \;
+        \If{$\exists s \in newStrings$, такое что $s \in targetSet$}{
+            \Return True \;
+        }
+        unvisited $\leftarrow$ newStrings $\setminus$ visited \;
+        visited $\leftarrow$ visited $\cup$ unvisited \;
+        queue.Enqueue(unvisited) \;
+    }
+    \Return False \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FMain{}}{
+    $\w$ $\leftarrow$ \FGenerate{10, 20} \;
+    $\w'$ $\leftarrow$ \FRandom{w} \;
+
+    \eIf{$\w \prec \w'$}{
+        shorterStr $\leftarrow \w$; longerStr $\leftarrow \w'$ \;
+    }{
+        shorterStr $\leftarrow w'$; longerStr $\leftarrow w$ \;
+    }
+
+    reachableFromShorter $\leftarrow$ \FReach{shorterStr, srs$\T'$} \;
+    areEquivalent $\leftarrow$ \FCheck{longerStr, srs$\T'$, reachableFromShorter} \;
+
+    вывести areEquivalent \;
+}
+\end{algorithm}
 
 
 

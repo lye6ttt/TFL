@@ -19,76 +19,82 @@ srsT = [
 srsT' :: [Rule]
 srsT' = [("a", ""), ("b", ""), ("c", "")]
 
-alf :: String
-alf = "abc"
+alphabet :: String
+alphabet = "abc"
 
+-- сравнение по military порядку
+compareLengthLex :: String -> String -> Ordering
+compareLengthLex s1 s2
+    | length s1 < length s2 = LT
+    | length s1 > length s2 = GT
+    | otherwise             = compare s1 s2
+
+-- генерируем случайную строку
 generateRandomString :: Int -> Int -> IO String
 generateRandomString minLen maxLen = do
     len <- randomRIO (minLen, maxLen)
     replicateM len $ do
-        idx <- randomRIO (0, length alf - 1)
-        return $ alf !! idx
+        idx <- randomRIO (0, length alphabet - 1)
+        return $ alphabet !! idx
 
+-- находим все вхождения подстроки в строку
 findAllOccurrences :: String -> String -> [Int]
 findAllOccurrences pattern text =
     [i | (i, tail) <- zip [0..] (tails text), pattern `isPrefixOf` tail]
 
+-- заменяем подстроку по индексу
 replaceSubstring :: Int -> Int -> String -> String -> String
-replaceSubstring pos oldLen newText str =
-    let (before, after) = splitAt pos str
-    in before ++ newText ++ drop oldLen after
+replaceSubstring idx len replacement str =
+    let (before, after) = splitAt idx str
+    in before ++ replacement ++ drop len after
 
-getNextStates :: String -> [Rule] -> Set.Set String
-getNextStates current rules = Set.fromList $ do
-    (pattern, replacement) <- rules
-    positions <- findAllOccurrences pattern current
-    let newStr = replaceSubstring positions (length pattern) replacement current
-
-    if any (`isPrefixOf` current) (tails pattern)
-    then return newStr
-    else return newStr
-
+-- случайным образом преобразовываем строку по srs T
 randomlyTransform :: String -> IO String
-randomlyTransform input = do
-    steps <- randomRIO (5, 10)
-    let initialState = ([], input, steps)
-    (_, result, _) <- transformLoop initialState
-    return result
+randomlyTransform inputStr = do
+    numApplications <- randomRIO (5, 10)
+    go numApplications inputStr
   where
-    transformLoop :: ([String], String, Int) -> IO ([String], String, Int)
-    transformLoop (history, current, stepsLeft)
-        | stepsLeft <= 0 = return (history, current, stepsLeft)
-        | otherwise = do
-            let possibleChanges = [(pos, pat, rep) | 
-                                  (pat, rep) <- srsT, 
-                                  pos <- findAllOccurrences pat current]
-            
-            if null possibleChanges
-            then return (history, current, stepsLeft)
-            else do
-                index <- randomRIO (0, length possibleChanges - 1)
-                let (pos, pattern, replacement) = possibleChanges !! index
-                let nextStr = replaceSubstring pos (length pattern) replacement current
-                
-                let newHistory = history ++ [current]  
-                transformLoop (newHistory, nextStr, stepsLeft - 1)
+    go :: Int -> String -> IO String
+    go 0 s = return s
+    go n s = do
+        let possibleChanges = do
+                (pattern, replacement) <- srsT
+                idx <- findAllOccurrences pattern s
+                return (idx, pattern, replacement)
+        
+        if null possibleChanges
+        then return s
+        else do
+            (idx, pattern, replacement) <- (possibleChanges !!) <$> randomRIO (0, length possibleChanges - 1)
+            let newStr = replaceSubstring idx (length pattern) replacement s
+            go (n - 1) newStr
 
+-- всевозможные слова, достижимые за один шаг
+getNextStates :: String -> [Rule] -> Set.Set String
+getNextStates str rules = Set.fromList $ do
+    (pattern, replacement) <- rules
+    let indices = findAllOccurrences pattern str
+    idx <- indices
+    return $ replaceSubstring idx (length pattern) replacement str
+
+-- смотрим все достижимые слова из startStr
 findAllReachable :: String -> [Rule] -> Set.Set String
-findAllReachable start rules = bfs (Set.singleton start) (Seq.singleton start)
+findAllReachable startStr rules = bfs (Set.singleton startStr) (Seq.singleton startStr)
   where
     bfs visited queue
         | Seq.null queue = visited
         | otherwise =
             let (current Seq.:<| rest) = queue
-                nextStates = getNextStates current rules
-                unvisited = Set.filter (`Set.notMember` visited) nextStates
+                newStrings = getNextStates current rules
+                unvisited = Set.difference newStrings visited
                 newVisited = Set.union visited unvisited
                 newQueue = rest Seq.>< Seq.fromList (Set.toList unvisited)
             in bfs newVisited newQueue
 
-check :: String -> [Rule] -> Set.Set String -> Bool
-check startStr rules strings
-    | startStr `Set.member` strings = True
+-- проверяем, можно ли startStr преобразовать к строке из reachableFromShorter
+checkIntersection :: String -> [Rule] -> Set.Set String -> Bool
+checkIntersection startStr rules targetSet
+    | startStr `Set.member` targetSet = True
     | otherwise = bfs (Set.singleton startStr) (Seq.singleton startStr)
   where
     bfs visited queue
@@ -96,7 +102,7 @@ check startStr rules strings
         | otherwise =
             let (current Seq.:<| rest) = queue
                 newStrings = getNextStates current rules
-            in case find (`Set.member` strings) (Set.toList newStrings) of
+            in case find (`Set.member` targetSet) (Set.toList newStrings) of
                 Just _ -> True
                 Nothing ->
                     let unvisited = Set.difference newStrings visited
@@ -112,11 +118,12 @@ main = do
     w' <- randomlyTransform w
     putStrLn $ "w': " ++ w'
 
-    let (shorter, longer) =
-            if length w <= length w'
+    let (shorterStr, longerStr) =
+            if compareLengthLex w w' /= GT
             then (w, w')
             else (w', w)
 
-    let areEquivalent = check longer srsT (findAllReachable shorter srsT')
+    let reachableFromShorter = findAllReachable shorterStr srsT'
+    let areEquivalent = checkIntersection longerStr srsT' reachableFromShorter
 
-    putStrLn $ show areEquivalent
+    putStrLn $ "are equivalent? " ++ show areEquivalent
