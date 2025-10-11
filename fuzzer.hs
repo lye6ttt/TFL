@@ -9,15 +9,15 @@ type Rule = (String, String)
 
 srsT :: [Rule]
 srsT = [
-    ("cb", "ba"), ("aaa", "aa"), ("aba", "ba"), ("ac", "cc"),
-    ("baa", "ba"), ("bba", "ba"), ("bbb", "b"), ("bbc", "c"),
-    ("bcc", "cc"), ("ba", "cab"), ("cac", "cc"), ("bab", "cac"),
-    ("ccc", "c"), ("babb", "ba"), ("babc", ""), ("baca", "cabba"),
-    ("caab", "bb"), ("caac", "bc"), ("aabcaa", "a")
+    ("cb", "ba"), ("aaa", "aa"), ("aba", "ba"), 
+    ("ac", "cc"), ("baa", "ba"), ("bbb", "b"), 
+    ("bbc", "c"), ("ba", "cab"), ("cac", "cc"), 
+    ("bab", "cac"), ("ccc", "c"), ("babb", "ba"), 
+    ("babc", "")
     ]
 
 srsT' :: [Rule]
-srsT' = [("a", ""), ("b", ""), ("c", "")]
+srsT' = [("a", ""), ("bb", ""), ("c", "")]
 
 alphabet :: String
 alphabet = "abc"

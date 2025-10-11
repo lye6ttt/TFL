@@ -13,6 +13,7 @@
 \usepackage{amssymb}
 \usepackage{enumitem}
 \usepackage{tikz}
+\usepackage{cancel}
 \usetikzlibrary{automata, positioning, arrows.meta}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 
@@ -176,7 +177,7 @@ cac$) и к слову $\varepsilon$, являющемуся НФ. При это
 
 
 % ==============================
-%          ПОПОЛНЕНИЕ
+%           ПОПОЛНЕНИЕ
 % ==============================
 \subsection{Пополняемость по Кнуту-Бендиксу}
 
@@ -298,26 +299,89 @@ $ccc \rightarrow c$\\
     $c \rightarrow \varepsilon$.                                   
 \end{enumerate}
 Таким образом, пополненная SRS имеет вид:
-\begin{flushleft}
+\begin{center}
 $a \rightarrow \varepsilon$\\
 $b \rightarrow \varepsilon$\\
 $c \rightarrow \varepsilon$
-\end{flushleft}
+\end{center}
 
 
 
 % ==============================
 %       ЭКВИВАЛЕНТНАЯ SRS
 % ==============================
-\subsection{Построение SRS $\mathcal{T}'$}
+\subsection{Построение SRS $\tilde{\T}'$}
 
-На основе исследования SRS $\T$, эквивалентной ей SRS будем считать $\T'$:
+На основе исследования SRS $\T$, эквивалентная ей SRS $\T'$:
 \begin{center}
 $a \rightarrow \varepsilon$\\
 $b \rightarrow \varepsilon$\\
 $c \rightarrow \varepsilon$
 \end{center}
 т.к. она сохраняет те же классы эквивалентности.
+\\\\
+Т.к. в исходной SRS $\T$ один класс эквивалентности, то задача фазз-тестирования
+и метаморфного тестирования тривиальна. Поэтому необходимо выкинуть одно или
+несколько правил, которые сводят любые два слова в один класс. Рассмотрим такую
+систему переписываний $\tilde{\T}$:
+\begin{flushleft}
+\begin{multicols}{4}
+$cb \rightarrow ba$\\
+$aaa \rightarrow aa$\\
+$aba \rightarrow ba$\\
+$ac \rightarrow cc$\\
+$baa \rightarrow ba$\\
+$\cancel{bba \rightarrow ba}$\\
+$bbb \rightarrow b$\\
+$bbc \rightarrow c$\\
+$\cancel{bcc \rightarrow cc}$\\
+$ba \rightarrow cab$\\
+$cac \rightarrow cc$\\
+$bab \rightarrow cac$\\
+$ccc \rightarrow c$\\
+$babb \rightarrow ba$\\
+$babc \rightarrow \varepsilon$\\
+$\cancel{baca \rightarrow cabba}$\\
+$\cancel{caab \rightarrow bb}$\\
+$\cancel{caac \rightarrow bc}$\\
+$\cancel{aabcaa \rightarrow a}$
+\end{multicols}
+\end{flushleft}
+В ней 2 класса эквивалентности: соответствующих $\varepsilon$ и $b$. \\
+\textbf{Доказательство}. \\
+Возьмем правило $babc \rightarrow \varepsilon$.
+Тогда слово $babc$ лежит в одном классе с $\varepsilon$ ($babc \equiv 
+\varepsilon$). Т.к. $bab \rightarrow cac$, то $cacc \equiv \varepsilon$.
+Далее, $cac \rightarrow cc$, поэтому $ccc \equiv \varepsilon$. А тогда
+$c \equiv \varepsilon$ (т.к. $ccc \rightarrow c$).\\
+Из правил $ac \equiv cc$ и $c \equiv \varepsilon$ следует, что $a \equiv
+\varepsilon$. А из $babc \equiv \varepsilon$, $a \equiv \varepsilon$ и
+                                              $c \equiv \varepsilon$
+следует, что $bb \equiv \varepsilon$.\\
+Т.к. ни в одном правиле четность вхождений $b$ не меняется, то $b$ является
+отдельным классом эквивалентности, в который входят все слова с нечетным
+количеством вхождений $b$.\\\\
+Минимальный автомат, соответствующий этой SRS:
+\begin{center}
+\begin{tikzpicture}[
+    ->, >=Stealth, node distance=3cm, 
+    every state/.style={thick, fill=gray!10},
+    initial text={}
+    ]
+    \node[state, initial] (eps) {$\varepsilon$};
+    \node[state, right of=eps] (b) {$b$};
+    \path (eps) edge [loop above] node {$a, c$} (eps);
+    \path (eps) edge [bend left=20] node[above] {$b$} (b);
+    \path (b) edge [bend left=20] node[below] {$b$} (eps);
+    \path (b) edge [loop above] node {$a, c$} (b);
+\end{tikzpicture}
+\end{center}
+Минимальная SRS $\tilde{\T}'$ по этому автомату:
+\begin{center}
+$a \rightarrow \varepsilon$\\
+$bb \rightarrow \varepsilon$\\
+$c \rightarrow \varepsilon$
+\end{center}
 % -------------------------------------------------------------------------------------
 \newpage
 \section{Тестирование}
@@ -332,13 +396,13 @@ $c \rightarrow \varepsilon$
 Фазз-тестирование проводится следующим образом: 
 \begin{enumerate} [parsep=-1pt]
     \item генерируется случайная строка $\w$;
-    \item строится случайная цепочка по правилам SRS $\T$ в $\w'$;
+    \item строится случайная цепочка по правилам SRS $\tilde{\T}$ в $\w'$;
     \item выбираем наименьшее из $\w$ и $\w'$, согласно выбранному 
     фундированному порядку при построении $\T'$;
     \item смотрим множество слов, которые можно получить из меньшего слова в 
-    SRS $\T'$;
+    SRS $\tilde{\T}'$;
     \item проверяем, можно ли из большего слова получить элемент ранее найденного
-    множества по SRS $\T'$ --- если да, то $\w$ и $\w'$ эквивалентны.
+    множества по SRS $\tilde{\T}'$ --- если да, то $\w$ и $\w'$ эквивалентны.
 \end{enumerate}
 Исходный код программы представлен в файле <<fuzzer.hs>>. \\\\
 Ниже представлен псевдокод самых важных функций:
