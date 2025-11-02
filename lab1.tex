@@ -1,0 +1,536 @@
+\documentclass[a4paper,12pt]{article}
+
+% ==============================
+%            ПАКЕТЫ
+% ==============================
+\usepackage{cmap}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{hyperref}
+\usepackage{multicol}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{cancel}
+\usetikzlibrary{automata, positioning, arrows.meta}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+
+
+
+% ==============================
+%         СОКРАЩЕНИЯ
+% ==============================
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\w}{\omega}
+\newcommand{\pair}[2]{\langle #1, #2 \rangle}
+
+
+
+% ==============================
+%         ПЕРВЫЙ ЛИСТ
+% ==============================
+
+\author{Лиганкина Анна\\ Вариант 20}
+\title{Лабораторная работа №1}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\newpage
+
+
+
+% ==============================
+%           ЗАДАНИЕ
+% ==============================
+
+\section{Задание}
+
+Дана SRS:
+\begin{flushleft}
+\begin{multicols}{4}
+$cb \rightarrow ba$\\
+$aaa \rightarrow aa$\\
+$aba \rightarrow ba$\\
+$ac \rightarrow cc$\\
+$baa \rightarrow ba$\\
+$bba \rightarrow ba$\\
+$bbb \rightarrow b$\\
+$bbc \rightarrow c$\\
+$bcc \rightarrow cc$\\
+$ba \rightarrow cab$\\
+$cac \rightarrow cc$\\
+$bab \rightarrow cac$\\
+$ccc \rightarrow c$\\
+$babb \rightarrow ba$\\
+$babc \rightarrow \varepsilon$\\
+$baca \rightarrow cabba$\\
+$caab \rightarrow bb$\\
+$caac \rightarrow bc$\\
+$aabcaa \rightarrow a$
+\end{multicols}
+\end{flushleft}
+
+По имеющейся SRS определить:
+\begin{itemize}
+    \item[---] завершимость;
+    \item[---] конечность классов эквивалентности по НФ (для построения 
+    эквивалентностей считаем, что правила могут применяться в обе стороны). 
+    Если их конечное число, то построить минимальную систему переписывания, 
+    им соответствующую;
+    \item[---] локальную конфлюэнтность и пополняемость по Кнуту-Бендиксу.
+\end{itemize}
+
+По SRS $\mathcal{T}$ тем самым (исключая случай, когда она сразу локально 
+конфлюэнтна или конечна и минимальна) строится другая SRS $\T'$, которая 
+должна сохранять те же классы эквивалентности. Если исходная SRS завершима, 
+то правила в $\T'$ должны удовлетворять условию убывания левой части 
+относительно правой по выбранному фундированному порядку $\preceq$.
+
+Провести автоматическое тестирование предполагаемой эквивалентности указанных SRS.\\\\
+\textbf{Фазз-тестирование эквивалентности}: строится случайное слово $\w$ и 
+случайная цепочка переписываний его в $\w'$ по $\T$. Проверить, можно ли 
+получить $\w'$ из $\w$ (или наоборот) в рамках правил $\T'$.\\\\
+\textbf{Метаморфное тестирование}: выбрать инварианты, которые должны сохраняться
+(либо монотонно изменяться) при переписывании в рамках $\T$. Породить случайную 
+цепочку переписываний над случайным словом в $\T'$ и проверить выполнимость 
+инвариантов. Как минимум два разных инварианта.
+% -------------------------------------------------------------------------------------
+\section{Исследование SRS}
+
+
+
+% ==============================
+%        НЕЗАВЕРШИМОСТЬ
+% ==============================
+\subsection{Завершимость}
+
+Исходная SRS $\T$ незавершима, т.к. существует цикл:
+\[
+    caba \xrightarrow{aba \rightarrow ba}
+    cba \xrightarrow{cb \rightarrow ba}
+    baa \xrightarrow{ba \rightarrow cab} caba
+\]
+
+
+
+% ==============================
+%     КЛАССЫ ЭКВИВАЛЕНТНОСТИ
+% ==============================
+\subsection{Классы эквивалентности}
+
+Нормальных форм в SRS $\T$ бесконечное число. Для доказательства можно привести
+пример строки, состоящей лишь из подряд идущих подстрок $abc$, которые 
+ни во что не редуцируются.\\\\
+Рассмотрим, лежат ли все НФ длины 1 и пустая строка в одном классе эквивалентности.
+Т.к. стрелки рассматриваются в обе стороны, имеем такие цепочки:
+\[
+    \varepsilon \xleftrightarrow{babc \leftrightarrow \varepsilon} babc 
+                \xleftrightarrow{aba \leftrightarrow ba} ababc
+                \xleftrightarrow{babc \leftrightarrow \varepsilon} a
+\]\[
+    \varepsilon \xleftrightarrow{babc \leftrightarrow \varepsilon} babc 
+                \xleftrightarrow{bba \leftrightarrow ba} bbabc
+                \xleftrightarrow{babc \leftrightarrow \varepsilon} b
+\]\[
+    \varepsilon \xleftrightarrow{babc \leftrightarrow \varepsilon} babc 
+                \xleftrightarrow{bab \leftrightarrow cac} cacc
+                \xleftrightarrow{cac \leftrightarrow cc} ccc
+                \xleftrightarrow{ccc \leftrightarrow c} c
+\]
+Т.е. НФ $a, b, c$ лежат в одном классе эквивалентности $\varepsilon$. Т.к. алфавит
+состоит из этих букв, то все слова принадлежат одному классу эквивалентности 
+'$\varepsilon$'.\\\\
+Т.к. число классов эквивалентности конечно, то построим автомат по данной SRS:
+\begin{center}
+\begin{tikzpicture}[
+    ->, >=Stealth, node distance=3cm, 
+    every state/.style={thick, fill=gray!10},
+    initial text={}
+    ]
+    \node[state, initial] (eps) {$\varepsilon$};
+    \path (eps) edge [loop right] node {$a, b, c$} (eps);
+\end{tikzpicture}
+\end{center}
+Минимальной SRS, описывающей этот автомат, будет $a \rightarrow \varepsilon$,
+                                                 $b \rightarrow \varepsilon$,
+                                                 $c \rightarrow \varepsilon$.
+
+
+
+% ==============================
+%    ЛОКАЛЬНАЯ КОНФЛЮЭНТНОСТЬ
+% ==============================
+\subsection{Локальная конфлюэнтность}
+
+SRS $\T$ не является локально конфлюэнтной, т.к. для слова $babc$ в один шаг
+преобразований может быть переписана в слова $cacc$ (по правилу $bab \rightarrow 
+cac$) и к слову $\varepsilon$, являющемуся НФ. При этом слово $cacc$ невозможно
+привести к $\varepsilon$.\\\\
+Таким образом, система $\T$ не является локально конфлюэнтной.
+
+
+
+% ==============================
+%           ПОПОЛНЕНИЕ
+% ==============================
+\subsection{Пополняемость по Кнуту-Бендиксу}
+
+Для применения алгоритма Кнута-Бендикса введем фундированный порядок --- 
+length-lexicographic order $\prec$ --- и, в соответствии с ним, переориентируем 
+правила (что сохранит классы эквивалентности исходной SRS $\T$).\\\\
+Теперь наша SRS выглядит следующим образом:
+\begin{flushleft}
+\begin{multicols}{4}
+$aaa \rightarrow aa$\\
+$aabcaa \rightarrow a$\\
+$aba \rightarrow ba$\\
+$baa \rightarrow ba$\\
+$babb \rightarrow ba$\\
+$babc \rightarrow \varepsilon$\\
+$bba \rightarrow ba$\\
+$bbb \rightarrow b$\\
+$bbc \rightarrow c$\\
+$bcc \rightarrow cc$\\
+$caab \rightarrow bb$\\
+$caac \rightarrow bc$\\
+$cab \rightarrow ba$\\
+$cabba \rightarrow baca$\\
+$cac \rightarrow cc$\\
+$cac \rightarrow bab$\\
+$cb \rightarrow ba$\\
+$cc \rightarrow ac$\\
+$ccc \rightarrow c$\\
+\end{multicols}
+\end{flushleft}
+Найдем множество всех критических пар:
+\begin{enumerate}    
+    \item Правила $aaa \rightarrow aa$ и $aabcaa \rightarrow a$ порождают 
+    критическую пару $\pair{aabcaa}{aa}$ из слов $aaabcaa$ и $aabcaaa$. НФ для этой 
+    пары равны соответственно $\pair{a}{aa}$. Поэтому, т.к. $a \prec aa$, введем
+    правило $aa \rightarrow a$. Теперь можно редуцировать правила 
+    $aaa \rightarrow a$ и $baa \rightarrow ba$;
+    
+    \item Правила $aa \rightarrow a$ и $aabcaa \rightarrow a$ порождают 
+    критические пары $\pair{abcaa}{a}$ и $\pair{aabca}{a}$ из слова $aabcaa$. НФ для 
+    этой пары равны соответственно $\pair{abca}{a}$ и $\pair{abca}{a}$. Поэтому, т.к.
+    $a \prec abca$, введем правило $abca \rightarrow a$. Теперь можно редуцировать
+    правило $aabcaa \rightarrow a$;
+
+    \item Правила $aa \rightarrow a$ и $caab \rightarrow bb$ порождают 
+    критическую пару $\pair{cab}{bb}$ из слова $caab$. НФ для этой пары равны 
+    соответственно $\pair{ba}{bb}$. Поэтому, т.к. $ba \prec bb$, введем
+    правило $bb \rightarrow ba$. Теперь можно редуцировать правила 
+    $bba \rightarrow ba$ (т.к. $bba \xrightarrow{bb \rightarrow ba} baa 
+    \xrightarrow{aa \rightarrow a} ba$) и
+    $babb \rightarrow ba$ (т.к. $babb \xrightarrow{bb \rightarrow ba} baba 
+    \xrightarrow{aba \rightarrow ba} bba \xrightarrow{\text{переход выше}} ba$);
+
+    \item Т.к. существуют 2 различных правила переписывания строки $cac$ рассмотрим
+    критическую пару $\pair{cc}{bab}$. НФ для этой пары равны $ac$ и $bab$. Поэтому,
+    т.к. $cc \prec bab$, введем правило $bab \rightarrow ac$. Теперь можно редуцировать 
+    правило $cac \rightarrow bab$;
+
+    \item Правила $bab \rightarrow ac$ и $babc \rightarrow \varepsilon$ порождают 
+    критическую пару $\pair{acc}{\varepsilon}$ из слова $babc$. НФ для этой пары равны 
+    соответственно $\pair{ac}{\varepsilon}$. Поэтому, т.к. $\varepsilon \prec ac$, 
+    введем правило $ac \rightarrow \varepsilon$. Теперь можно редуцировать правило
+    $babc \rightarrow \varepsilon$, т.к. можно переписать 
+    $babc \xrightarrow{bab \rightarrow ac} acc 
+          \xrightarrow{cc \rightarrow ac} aac 
+          \xrightarrow{aa \rightarrow a} ac 
+          \rightarrow \varepsilon$;
+\end{enumerate}
+Промежуточная SRS:
+
+\begin{flushleft}
+\begin{multicols}{4}
+$aa \rightarrow a$\\
+$ac \rightarrow \varepsilon$\\
+$abca \rightarrow a$\\
+$aba \rightarrow ba$\\
+$bab \rightarrow ac$\\
+$bb \rightarrow ba$\\
+$bbb \rightarrow b$\\
+$bbc \rightarrow c$\\
+$bcc \rightarrow cc$\\
+$caab \rightarrow bb$\\
+$caac \rightarrow bc$\\
+$cab \rightarrow ba$\\
+$cabba \rightarrow baca$\\
+$cac \rightarrow cc$\\
+$cb \rightarrow ba$\\
+$cc \rightarrow ac$\\
+$ccc \rightarrow c$\\
+\end{multicols}
+\end{flushleft}
+
+\begin{enumerate}[resume]
+    \item Правила $aa \rightarrow a$ и $ac \rightarrow \varepsilon$ порождают 
+    критическую пару $\pair{ac}{a}$ из слова $aac$. НФ для этой пары равны 
+    соответственно $\pair{\varepsilon}{a}$. Поэтому, т.к. $\varepsilon \prec a$, 
+    введем правило $a \rightarrow \varepsilon$. Теперь можно редуцировать правила
+    $aa \rightarrow a$, 
+    $aba \rightarrow ba$,
+    $caab \rightarrow bb$
+    и заменить $bb \rightarrow ba$ и $bbb \rightarrow b$ на $bb \rightarrow b$;
+
+    \item Правила $a \rightarrow \varepsilon$ и $ac \rightarrow \varepsilon$ порождают
+    критическую пару $\pair{c}{\varepsilon}$ из слова $ac$. Добавляем правило $c 
+    \rightarrow \varepsilon$ и редуцируем правила $ac \rightarrow \varepsilon$,
+                                                  $cab \rightarrow ba$, 
+                                                  $cabba \rightarrow baca$,
+                                                  $cac \rightarrow cc$,
+                                                  $cb \rightarrow ba$,
+                                                  $cc \rightarrow ac$,
+                                                  $ccc \rightarrow c$
+
+    \item Правила $bcc \rightarrow cc$ и $c \rightarrow \varepsilon$ порождают
+    критическую пару $\pair{cc}{bc}$ из слова $bcc$. НФ для этой пары равны
+    соответственно $\pair{\varepsilon}{b}$, поэтому добавим правило $b \rightarrow 
+    \varepsilon$. Теперь можно редуцировать все правила, кроме 
+    $a \rightarrow \varepsilon$,
+    $b \rightarrow \varepsilon$ и 
+    $c \rightarrow \varepsilon$.                                   
+\end{enumerate}
+Таким образом, пополненная SRS имеет вид:
+\begin{center}
+$a \rightarrow \varepsilon$\\
+$b \rightarrow \varepsilon$\\
+$c \rightarrow \varepsilon$
+\end{center}
+
+
+
+% ==============================
+%       ЭКВИВАЛЕНТНАЯ SRS
+% ==============================
+\subsection{Построение SRS $\tilde{\T}'$}
+
+На основе исследования SRS $\T$, эквивалентная ей SRS $\T'$:
+\begin{center}
+$a \rightarrow \varepsilon$\\
+$b \rightarrow \varepsilon$\\
+$c \rightarrow \varepsilon$
+\end{center}
+т.к. она сохраняет те же классы эквивалентности.
+\\\\
+Т.к. в исходной SRS $\T$ один класс эквивалентности, то задача фазз-тестирования
+и метаморфного тестирования тривиальна. Поэтому необходимо выкинуть одно или
+несколько правил, которые сводят любые два слова в один класс. Рассмотрим такую
+систему переписываний $\tilde{\T}$:
+\begin{flushleft}
+\begin{multicols}{4}
+$cb \rightarrow ba$\\
+$aaa \rightarrow aa$\\
+$aba \rightarrow ba$\\
+$ac \rightarrow cc$\\
+$baa \rightarrow ba$\\
+$\cancel{bba \rightarrow ba}$\\
+$bbb \rightarrow b$\\
+$bbc \rightarrow c$\\
+$\cancel{bcc \rightarrow cc}$\\
+$ba \rightarrow cab$\\
+$cac \rightarrow cc$\\
+$bab \rightarrow cac$\\
+$ccc \rightarrow c$\\
+$babb \rightarrow ba$\\
+$babc \rightarrow \varepsilon$\\
+$\cancel{baca \rightarrow cabba}$\\
+$\cancel{caab \rightarrow bb}$\\
+$\cancel{caac \rightarrow bc}$\\
+$\cancel{aabcaa \rightarrow a}$
+\end{multicols}
+\end{flushleft}
+В ней 2 класса эквивалентности: соответствующих $\varepsilon$ и $b$. \\
+\textbf{Доказательство}. \\
+Возьмем правило $babc \rightarrow \varepsilon$.
+Тогда слово $babc$ лежит в одном классе с $\varepsilon$ ($babc \equiv 
+\varepsilon$). Т.к. $bab \rightarrow cac$, то $cacc \equiv \varepsilon$.
+Далее, $cac \rightarrow cc$, поэтому $ccc \equiv \varepsilon$. А тогда
+$c \equiv \varepsilon$ (т.к. $ccc \rightarrow c$).\\
+Из правил $ac \equiv cc$ и $c \equiv \varepsilon$ следует, что $a \equiv
+\varepsilon$. А из $babc \equiv \varepsilon$, $a \equiv \varepsilon$ и
+                                              $c \equiv \varepsilon$
+следует, что $bb \equiv \varepsilon$.\\
+Т.к. ни в одном правиле четность вхождений $b$ не меняется, то $b$ является
+отдельным классом эквивалентности, в который входят все слова с нечетным
+количеством вхождений $b$.\\\\
+Минимальный автомат, соответствующий этой SRS:
+\begin{center}
+\begin{tikzpicture}[
+    ->, >=Stealth, node distance=3cm, 
+    every state/.style={thick, fill=gray!10},
+    initial text={}
+    ]
+    \node[state, initial] (eps) {$\varepsilon$};
+    \node[state, right of=eps] (b) {$b$};
+    \path (eps) edge [loop above] node {$a, c$} (eps);
+    \path (eps) edge [bend left=20] node[above] {$b$} (b);
+    \path (b) edge [bend left=20] node[below] {$b$} (eps);
+    \path (b) edge [loop above] node {$a, c$} (b);
+\end{tikzpicture}
+\end{center}
+Минимальная SRS $\tilde{\T}'$ по этому автомату:
+\begin{center}
+$a \rightarrow \varepsilon$\\
+$bb \rightarrow \varepsilon$\\
+$c \rightarrow \varepsilon$
+\end{center}
+% -------------------------------------------------------------------------------------
+\newpage
+\section{Тестирование}
+
+
+
+% ==============================
+%       ФАЗЗ-ТЕСТИРОВАНИЕ
+% ==============================
+\subsection{Фазз-тестирование эквивалентности}
+
+Фазз-тестирование проводится следующим образом: 
+\begin{enumerate} [parsep=-1pt]
+    \item генерируется случайная строка $\w$;
+    \item строится случайная цепочка по правилам SRS $\tilde{\T}$ в $\w'$;
+    \item выбираем наименьшее из $\w$ и $\w'$, согласно выбранному 
+    фундированному порядку при построении $\T'$;
+    \item смотрим множество слов, которые можно получить из меньшего слова в 
+    SRS $\tilde{\T}'$;
+    \item проверяем, можно ли из большего слова получить элемент ранее найденного
+    множества по SRS $\tilde{\T}'$ --- если да, то $\w$ и $\w'$ эквивалентны.
+\end{enumerate}
+Исходный код программы представлен в файле <<fuzzer.hs>>. \\\\
+Ниже представлен псевдокод самых важных функций:
+
+\begin{algorithm}[H]
+\DontPrintSemicolon
+
+\SetKwFunction{FGenerate}{generateRandomString}
+\SetKwFunction{FFindAll}{findAllOccurrences}
+\SetKwFunction{FReplace}{replaceSubstring}
+\SetKwFunction{FNext}{getNextStates}
+\SetKwFunction{FRandom}{randomlyTransform}
+\SetKwFunction{FReach}{findAllReachable}
+\SetKwFunction{FCheck}{checkIntersection}
+\SetKwFunction{FMain}{main}
+\SetKwProg{Fn}{}{:}{конец}
+
+% -------------------------------------------------------------------------------------
+\Fn{\FFindAll{pattern, text}}{
+    positions $\leftarrow$ пустой список \;
+    \For{$i \leftarrow 0$ \KwTo $|text|-|pattern|$}{
+        \If{подстрока text[i..] начинается с pattern}{
+            добавить $i$ в positions \;
+        }
+    }
+    \Return positions \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FReplace{idx, len, replacement, str}}{
+    before $\leftarrow$ str[0 : idx] \;
+    after $\leftarrow$ str[idx + len :] \;
+    \Return before $+$ replacement $+$ after \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FNext{str, rules}}{
+    result $\leftarrow \varnothing$ \;
+    \ForEach{(lhs, rhs) $\in$ srs}{
+        indices $\leftarrow$ \FFindAll{lhs, str} \;
+        \ForEach{idx $\in$ indices}{
+            newStr $\leftarrow$ \FReplace{idx, |lhs|, rhs, str} \;
+            добавить newStr в result \;
+        }
+    }
+    \Return result \;
+}
+
+\end{algorithm}
+
+\begin{algorithm}[H]
+\DontPrintSemicolon
+
+\SetKwProg{Fn}{}{:}{конец}
+% -------------------------------------------------------------------------------------
+\Fn{\FReach{startStr, rules}}{
+    visited $\leftarrow \{startStr\}$ \;
+    queue $\leftarrow$ очередь со startStr \;
+    \While{queue $\neq \varnothing$}{
+        current $\leftarrow$ queue.Dequeue() \;
+        newStrings $\leftarrow$ \FNext{current, rules} \;
+        unvisited $\leftarrow$ newStrings $\setminus$ visited \;
+        visited $\leftarrow$ visited $\cup$ unvisited \;
+        queue.Enqueue(unvisited) \;
+    }
+    \Return visited \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FCheck{startStr, rules, targetSet}}{ 
+    \If{startStr $\in$ targetSet}{
+        \Return True \;
+    }
+    visited $\leftarrow \{startStr\}$ \;
+    queue $\leftarrow$ очередь со startStr \;
+    \While{queue $\neq \varnothing$}{
+        current $\leftarrow$ queue.Dequeue() \;
+        newStrings $\leftarrow$ \FNext{current, rules} \;
+        \If{$\exists s \in newStrings$, такое что $s \in targetSet$}{
+            \Return True \;
+        }
+        unvisited $\leftarrow$ newStrings $\setminus$ visited \;
+        visited $\leftarrow$ visited $\cup$ unvisited \;
+        queue.Enqueue(unvisited) \;
+    }
+    \Return False \;
+}
+
+\vspace{0.5cm}
+% -------------------------------------------------------------------------------------
+\Fn{\FMain{}}{
+    $\w$ $\leftarrow$ \FGenerate{10, 20} \;
+    $\w'$ $\leftarrow$ \FRandom{w} \;
+
+    \eIf{$\w \prec \w'$}{
+        shorterStr $\leftarrow \w$; longerStr $\leftarrow \w'$ \;
+    }{
+        shorterStr $\leftarrow w'$; longerStr $\leftarrow w$ \;
+    }
+
+    reachableFromShorter $\leftarrow$ \FReach{shorterStr, srs$\T'$} \;
+    areEquivalent $\leftarrow$ \FCheck{longerStr, srs$\T'$, reachableFromShorter} \;
+
+    вывести areEquivalent \;
+}
+\end{algorithm}
+
+
+
+% ==============================
+%    МЕТАМОРФНОЕ ТЕСТИРОВАНИЕ
+% ==============================
+\subsection{Метаморфное тестирование}
+
+Для метаморфного тестирования были выбраны 2 инварианта:
+\begin{enumerate}[parsep=-1pt]
+    \item невозрастание количества букв $b$;
+    \item сохранение четности вхождения букв $b$ю
+\end{enumerate}
+Метаморфное тестирование проводится следующим образом: 
+\begin{enumerate} [parsep=-1pt]
+    \item генерируется случайная строка $\w$;
+    \item строится случайная цепочка по правилам SRS $\tilde{\T}$ в $\w'$;
+    \item строится случайная цепочка по правилам SRS $\tilde{\T}'$ в $\w''$;
+    \item проверяем, верен ли инвариант для пар $\w, \w'$ и $\w,  \w''$.
+\end{enumerate}
+Исходный код программы представлен в файле <<meta.hs>>. \\\\
+\end{document}
