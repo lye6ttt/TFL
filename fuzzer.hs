@@ -18,20 +18,32 @@ generateRandomWord n = replicateM n $ do
     i <- randomRIO (0, 2)
     pure (alphabet !! i)
 
-generateByRegex :: Int -> IO String
-generateByRegex maxLength = do
-    let alphabet = "abc"
-    length <- randomRIO (1, maxLength)
-
-    findMatchingWord length alphabet
+generateByRegex :: IO String
+generateByRegex = do
+    n1 <- randomRIO (0, 5)
+    part1 <- concat <$> replicateM n1 (randomChoice ["aa", "bb", "cc"])
+    
+    n2 <- randomRIO (0, 5)
+    part2 <- concat <$> replicateM n2 (randomChoice ["aaa", "bbb"])
+    
+    n3 <- randomRIO (0, 5)
+    part3 <- concat <$> replicateM n3 generateInnerPattern
+    
+    lastChar <- randomChoice ["a", "b", "c"]
+    addB <- randomRIO (0, 1 :: Int)
+    
+    return $ part1 ++ "b" ++ part2 ++ part3 ++ "abc" ++ lastChar ++ if addB == 1 then "b" else ""
   where
-    findMatchingWord len alph = do
-        word <- replicateM len $ do
-            i <- randomRIO (0, length alph - 1)
-            pure (alph !! i)
-        if isAcceptedByRegex word
-            then return word
-            else findMatchingWord len alph
+    generateInnerPattern :: IO String
+    generateInnerPattern = do
+        n <- randomRIO (0, 5)
+        inner <- concat <$> replicateM n (randomChoice ["ab", "bc", "ccc"])
+        return $ inner ++ "aa"
+    
+    randomChoice :: [String] -> IO String
+    randomChoice xs = do
+        index <- randomRIO (0, length xs - 1)
+        return (xs !! index)
 
 generateByDFA :: Int -> IO String
 generateByDFA maxLength = do
@@ -335,12 +347,13 @@ main :: IO ()
 main = do
     let maxLength = 20
 
-    word1 <- generateByRegex maxLength
+    word0 <- generateWord maxLength
+    word1 <- generateByRegex
     word2 <- generateByDFA maxLength
     word3 <- generateByNFA maxLength
     word4 <- generateByNFA maxLength
 
-    let words = [word1, word2, word3, word4]
+    let words = [word0, word1, word2, word3, word4]
 
     forM_ (zip [1..] words) $ \(i, word) -> do
         let r   = isAcceptedByRegex word
