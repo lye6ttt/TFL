@@ -98,6 +98,53 @@ generateByNFA maxLength = do
                     
                     generateNFAPath nextStates accStates (path ++ [chosenChar]) maxLen
 
+generateByAFA :: Int -> IO String
+generateByAFA maxLength = do
+    let start = S.singleton 0
+        acc1  = S.fromList [26,29]
+        acc2  = S.fromList [24,25,26,29]
+
+    generateAFAPath start acc1 acc2 "" maxLength
+  where
+    generateAFAPath currentStates acc1States acc2States path maxLen
+        | length path >= maxLen = 
+            if not (S.null (S.intersection currentStates acc1States)) &&
+               not (S.null (S.intersection currentStates acc2States))
+                then return path 
+                else generateByAFA maxLength  -- тупик
+        | not (S.null (S.intersection currentStates acc1States)) &&
+          not (S.null (S.intersection currentStates acc2States)) = do
+            stop <- randomRIO (0, 1 :: Int)
+            if stop == 0 || length path >= maxLen
+                then return path
+                else continueGeneration
+        | otherwise = continueGeneration
+      where
+        continueGeneration = do
+            let allPossible1 = [ (c, nextState) | 
+                                state <- S.toList currentStates,
+                                (c, nextState) <- M.findWithDefault [] state afa1Map ]
+                allPossible2 = [ (c, nextState) | 
+                                state <- S.toList currentStates,
+                                (c, nextState) <- M.findWithDefault [] state afa2Map ]
+            
+            let chars1 = S.fromList $ map fst allPossible1
+                chars2 = S.fromList $ map fst allPossible2
+                commonChars = S.toList $ S.intersection chars1 chars2
+            
+            if null commonChars
+                then generateByAFA maxLength  -- тупик
+                else do
+                    charIdx <- randomRIO (0, length commonChars - 1)
+                    let chosenChar = commonChars !! charIdx
+                    
+                    let nextStates1 = S.fromList [ ns | (c, ns) <- allPossible1, c == chosenChar ]
+                    let nextStates2 = S.fromList [ ns | (c, ns) <- allPossible2, c == chosenChar ]
+                    
+                    let nextStates = S.union nextStates1 nextStates2
+                    
+                    generateAFAPath nextStates acc1States acc2States (path ++ [chosenChar]) maxLen
+
 isAcceptedByRegex :: String -> Bool
 isAcceptedByRegex w =
     let re = "(aa|bb|cc)*b(aaa|bbb)*((ab|bc|ccc)*aa)*abc(a|b|c)(b|())" :: String
@@ -220,6 +267,68 @@ isAcceptedByNFA w =
         final = foldl stepNFA start w
     in not (S.null (S.intersection final acc))
     
+afa1 :: [(Int, Char, Int)]
+afa1 =
+  [ (0,'a',1),(0,'b',3),(0,'c',5),(0,'b',7)
+  , (1,'a',0)
+  , (3,'b',0)
+  , (5,'c',0)
+  , (7,'a',7),(7,'b',7),(7,'a',14),(7,'b',16),(7,'c',18)
+  , (7,'a',21),(7,'a',23)
+  , (14,'b',15),(15,'a',14),(15,'a',21),(15,'b',16),(15,'c',18)
+  , (16,'c',15),(18,'c',16)
+  , (21,'a',22),(22,'a',14),(22,'a',21),(22,'a',23),(22,'b',16),(22,'c',18)
+  , (23,'b',24),(24,'c',25)
+  , (25,'a',26),(25,'b',26),(25,'c',26)
+  , (26,'b',29)
+  ]
+
+afa2 :: [(Int, Char, Int)]
+afa2 =
+  [ (0,'a',1),(0,'b',3),(0,'c',5),(0,'b',7)
+  , (1,'a',0)
+  , (3,'b',0)
+  , (5,'c',0)
+  , (7,'a',8),(7,'b',11),(7,'a',14),(7,'b',16),(7,'c',18)
+  , (7,'a',21),(7,'a',23)
+  , (8,'a',9),(9,'a',7)
+  , (11,'b',12),(12,'b',7)
+  , (14,'b',15),(15,'a',14),(15,'a',21),(15,'b',16),(15,'c',18)
+  , (16,'c',15),(18,'c',16)
+  , (21,'a',22),(22,'a',14),(22,'a',21),(22,'a',23),(22,'b',16),(22,'c',18)
+  , (23,'b',24)
+  , (24,'a',25),(24,'b',25),(24,'c',25)
+  , (25,'a',26),(25,'b',26),(25,'c',26)
+  , (26,'a',29),(26,'b',29),(26,'c',29)
+  ]
+
+afa1Map :: M.Map Int [(Char, Int)]
+afa1Map = M.fromListWith (++) [ (s, [(c,t)]) | (s,c,t) <- afa1 ]
+
+stepAFA1 :: S.Set Int -> Char -> S.Set Int
+stepAFA1 states c =
+    let step st = S.fromList $ map snd $ filter ((==c) . fst) $
+                  M.findWithDefault [] st afa1Map
+    in S.unions (map step $ S.toList states)
+
+afa2Map :: M.Map Int [(Char, Int)]
+afa2Map = M.fromListWith (++) [ (s, [(c,t)]) | (s,c,t) <- afa2 ]
+
+stepAFA2 :: S.Set Int -> Char -> S.Set Int
+stepAFA2 states c =
+    let step st = S.fromList $ map snd $ filter ((==c) . fst) $
+                  M.findWithDefault [] st afa2Map
+    in S.unions (map step $ S.toList states)
+
+isAcceptedByAFA :: String -> Bool
+isAcceptedByAFA w =
+    let start  = S.singleton 0
+        acc1   = S.fromList [26,29]
+        final1 = foldl stepAFA1 start w
+        acc2   = S.fromList [24,25,26,29]
+        final2 = foldl stepAFA2 start w
+    in not (S.null (S.intersection final1 acc1)) &&
+       not (S.null (S.intersection final2 acc2))
 
 
 main :: IO ()
@@ -229,14 +338,16 @@ main = do
     word1 <- generateByRegex maxLength
     word2 <- generateByDFA maxLength
     word3 <- generateByNFA maxLength
+    word4 <- generateByNFA maxLength
 
-    let words = [word1, word2, word3]
+    let words = [word1, word2, word3, word4]
 
     forM_ (zip [1..] words) $ \(i, word) -> do
         let r   = isAcceptedByRegex word
             dfa = isAcceptedByDFA word
             nfa = isAcceptedByNFA word
+            afa = isAcceptedByAFA word
 
         putStrLn $ show word
-        putStrLn $ show r ++ show dfa ++ show nfa
+        putStrLn $ show r ++ show dfa ++ show nfa ++ show afa
         putStrLn ""
