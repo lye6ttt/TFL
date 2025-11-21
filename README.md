@@ -34,14 +34,14 @@ $$
     a_{23}b_{24}c_{25}(a_{26}|b_{27}|c_{28})(b_{29}|\varepsilon)
 $$
 
-<img src="NFA.png" width="1000" alt="NFA"/>
+<img src="img/NFA.png" width="1000" alt="NFA"/>
 
-Получившийся автомат в файле `NFA.dot`.
+Получившийся автомат в [файле `NFA.dot`](img/NFA.dot).
 
 После уменьшения количества состояний возможно малый НКА выглядит так:
-<img src="NFA_min.png" width="1000" alt="NFA_min"/>
+<img src="img/NFA_min.png" width="1000" alt="NFA_min"/>
 
-Получившийся автомат в файле `NFA_min.dot`.
+Получившийся автомат в [файле `NFA_min.dot`](img/NFA_min.dot).
 
 Частичное обоснование минимальности:
 | q  | prefix  | abca | aaabca | aaaaabca | aaaabca | abaaabca | bca | baababca | ca | caaabca | cbabca | aababca | a | bbabca | babca | b | ε | baaabca |
@@ -67,9 +67,9 @@ $$
 ### ДКА
 
 Детерминизуем и минимизируем возможно малый НКА и получим
-<img src="DFA_min.png" width="1000" alt="DFA_min"/>
+<img src="img/DFA_min.png" width="1000" alt="DFA_min"/>
 
-Получившийся автомат в файле `DFA_min.dot`.
+Получившийся автомат в [файле `DFA_min.dot`](img/DFA_min.dot).
 
 Обоснование минимальности:
 | q  | prefix       | ε | a | b | ca | bca | abca | aabca | babca | aaabca | ababca | bbabca | aaaabca | aababca | bbbabca | caaabca | baaaabca | ccaaabca | abaaaabca | bbaaaabca | cbaaaabca | aabaaaabca | bbbaaaabca | ccbaaaabca | abbbaaaabca | bccbaaaabca | aabbbaaaabca | aaabbbaaaabca |
@@ -148,9 +148,9 @@ $$
     (aa|bb|cc)^* b(aaa|bbb)^* ((ab|bc|ccc)^* aa)^* ab(a|b|c|)(a|b|c|)(a|b|c|)", 
 $$
 то возможно построить следующий ПКА:
-<img src="AFA.png" width="1000" alt="AFA"/>
+<img src="img/AFA.png" width="1000" alt="AFA"/>
 
-Получившийся автомат в файле `AFA.dot`.
+Получившийся автомат в [файле `AFA.dot`](img/AFA.dot).
 
 Частичное обоснование минимальности:
 | prefix    | ε | ca | caaabca | bbabca | aaabbbaaaabca | bbbabca | aaaabca | abca | aaabca |
@@ -169,4 +169,11 @@ $$
 
 ## Фазз-тестирование
 
-Код для фазз-тестирования в файле `fuzzer.hs`.
+Код для фазз-тестирования в [файле `fuzzer.hs`](/fuzzer.hs).
+
+Для запуска:
+
+```bash
+ghc -package regex-tdfa fuzzer.hs
+./fuzzer
+```
