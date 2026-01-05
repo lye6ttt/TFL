@@ -263,61 +263,59 @@ isAcceptedByNFA w = not (S.null (S.intersection final (nfaAcceptStates nfaConfig
 ---------------------------------------------------------------------
 -- ПКА
 ---------------------------------------------------------------------
+type StatePair = (Int, Int)
+
 data AFAConfig = AFAConfig
-    { afaStartStates :: S.Set Int
-    , afaAccept1 :: S.Set Int
-    , afaAccept2 :: S.Set Int
-    , afaStep1 :: S.Set Int -> Char -> S.Set Int
-    , afaStep2 :: S.Set Int -> Char -> S.Set Int
+    { afaStartState :: StatePair
+    , afaAcceptStates :: S.Set StatePair
+    , afaStepFunction :: StatePair -> Char -> S.Set StatePair
     }
 
 generateByAFA :: AFAConfig -> Int -> IO String
-generateByAFA config maxLength = generatePath (afaStartStates config) ""
+generateByAFA config maxLength = generatePath (S.singleton (afaStartState config)) ""
   where
     generatePath currentStates path
         | length path >= maxLength = 
-            if not (S.null (S.intersection currentStates (afaAccept1 config))) &&
-               not (S.null (S.intersection currentStates (afaAccept2 config)))
+            if not (S.null (S.intersection currentStates (afaAcceptStates config)))
                 then return path 
-                else generateByAFA config maxLength
-        | not (S.null (S.intersection currentStates (afaAccept1 config))) &&
-          not (S.null (S.intersection currentStates (afaAccept2 config))) = do
+                else
+                    generateByAFA config maxLength
+        
+        | not (S.null (S.intersection currentStates (afaAcceptStates config))) = do
             stop <- randomRIO (0, 1 :: Int)
             if stop == 0 || length path >= maxLength
                 then return path
-                else continueGeneration
-        | otherwise = continueGeneration
+                else continueGeneration path
+                
+        | otherwise = continueGeneration path
       where
-        continueGeneration = do
-            let allPossible1 = 
-                    [ (c, nextState) | 
-                      state <- S.toList currentStates,
-                      (c, nextState) <- M.findWithDefault [] state afa1Map ]
-                allPossible2 = 
-                    [ (c, nextState) | 
-                      state <- S.toList currentStates,
-                      (c, nextState) <- M.findWithDefault [] state afa2Map ]
+        continueGeneration currentPath = do
+            let possibleTransitions = 
+                    [ ((state, c), nextState)
+                    | state <- S.toList currentStates
+                    , c <- ['a', 'b', 'c']
+                    , let nextStates = afaStepFunction config state c
+                    , not (S.null nextStates)
+                    , nextState <- S.toList nextStates
+                    ]
             
-            let chars1 = S.fromList $ map fst allPossible1
-                chars2 = S.fromList $ map fst allPossible2
-                commonChars = S.toList $ S.intersection chars1 chars2
-            
-            if null commonChars
+            if null possibleTransitions
                 then generateByAFA config maxLength
                 else do
-                    chosenChar <- randomChoice commonChars
-                    let nextStates1 = S.fromList [ ns | (c, ns) <- allPossible1, c == chosenChar ]
-                    let nextStates2 = S.fromList [ ns | (c, ns) <- allPossible2, c == chosenChar ]
-                    let nextStates = S.intersection nextStates1 nextStates2
-                    generatePath nextStates (path ++ [chosenChar])
+                    ((state, chosenChar), nextState) <- randomChoice possibleTransitions
+                    generatePath (S.singleton nextState) (currentPath ++ [chosenChar])
 
-afa1, afa2 :: [(Int, Char, Int)]
-afa1 = 
+afaCommonPart :: [(Int, Char, Int)]
+afaCommonPart = 
   [ (0,'a',1),(0,'b',3),(0,'c',5),(0,'b',7)
   , (1,'a',0)
   , (3,'b',0)
   , (5,'c',0)
-  , (7,'a',7),(7,'b',7),(7,'a',14),(7,'b',16),(7,'c',18)
+  ]
+
+afa1 :: [(Int, Char, Int)]
+afa1 = 
+  [ (7,'a',7),(7,'b',7),(7,'a',14),(7,'b',16),(7,'c',18)
   , (7,'a',21),(7,'a',23)
   , (14,'b',15),(15,'a',14),(15,'a',21),(15,'b',16),(15,'c',18)
   , (16,'c',15),(18,'c',16)
@@ -326,12 +324,10 @@ afa1 =
   , (25,'a',26),(25,'b',26),(25,'c',26)
   , (26,'b',29)
   ]
+
+afa2 :: [(Int, Char, Int)]
 afa2 = 
-  [ (0,'a',1),(0,'b',3),(0,'c',5),(0,'b',7)
-  , (1,'a',0)
-  , (3,'b',0)
-  , (5,'c',0)
-  , (7,'a',8),(7,'b',11),(7,'a',14),(7,'b',16),(7,'c',18)
+  [ (7,'a',8),(7,'b',11),(7,'a',14),(7,'b',16),(7,'c',18)
   , (7,'a',21),(7,'a',23)
   , (8,'a',9),(9,'a',7)
   , (11,'b',12),(12,'b',7)
@@ -344,36 +340,53 @@ afa2 =
   , (26,'a',29),(26,'b',29),(26,'c',29)
   ]
 
-afa1Map, afa2Map :: M.Map Int [(Char, Int)]
-afa1Map = M.fromListWith (++) [ (s, [(c,t)]) | (s,c,t) <- afa1 ]
-afa2Map = M.fromListWith (++) [ (s, [(c,t)]) | (s,c,t) <- afa2 ]
+afaMap :: [(Int, Char, Int)] -> M.Map Int [(Char, Int)]
+afaMap afaPart = M.fromListWith (++) [(s, [(c,t)]) | (s,c,t) <- afaPart]
 
-stepAFA1, stepAFA2 :: S.Set Int -> Char -> S.Set Int
-stepAFA1 states c = S.unions $ map step $ S.toList states
-  where step st = S.fromList $ map snd $ filter ((==c) . fst) $ M.findWithDefault [] st afa1Map
+stepSingle :: M.Map Int [(Char, Int)] -> Int -> Char -> S.Set Int
+stepSingle transMap state char = 
+    S.fromList [t | (c, t) <- M.findWithDefault [] state transMap, c == char]
 
-stepAFA2 states c = S.unions $ map step $ S.toList states
-  where step st = S.fromList $ map snd $ filter ((==c) . fst) $ M.findWithDefault [] st afa2Map
+stepPair :: StatePair -> Char -> S.Set StatePair
+stepPair (s1, s2) c
+    | s1 == s2 && s1 < 7 =
+        let commonNext = stepSingle (afaMap afaCommonPart) s1 c
+        in S.fromList [(s, s) | s <- S.toList commonNext, s <= 7]
+    | otherwise =
+        let nextStates1 = stepSingle (afaMap afa1) s1 c
+            nextStates2 = stepSingle (afaMap afa2) s2 c
+        in S.cartesianProduct nextStates1 nextStates2
+
+accept1 :: S.Set Int
+accept1 = S.fromList [26, 29]
+
+accept2 :: S.Set Int  
+accept2 = S.fromList [24, 25, 26, 29]
+
+allAcceptPairs :: S.Set StatePair
+allAcceptPairs = S.filter (\(s1, s2) -> s1 `S.member` accept1 && s2 `S.member` accept2)
+                 (S.cartesianProduct accept1 accept2)
 
 afaConfig :: AFAConfig
 afaConfig = AFAConfig
-    { afaStartStates = S.singleton 0
-    , afaAccept1 = S.fromList [26,29]
-    , afaAccept2 = S.fromList [24,25,26,29]
-    , afaStep1 = stepAFA1
-    , afaStep2 = stepAFA2
+    { afaStartState = (0, 0)
+    , afaAcceptStates = allAcceptPairs
+    , afaStepFunction = stepPair
     }
 
 generateByAFA' :: Int -> IO String
 generateByAFA' = generateByAFA afaConfig
 
 isAcceptedByAFA :: String -> Bool
-isAcceptedByAFA w = acc1 && acc2
+isAcceptedByAFA w = not (S.null (S.intersection finalStates (afaAcceptStates afaConfig)))
   where
-    final1 = foldl stepAFA1 (afaStartStates afaConfig) w
-    final2 = foldl stepAFA2 (afaStartStates afaConfig) w
-    acc1 = not (S.null (S.intersection final1 (afaAccept1 afaConfig)))
-    acc2 = not (S.null (S.intersection final2 (afaAccept2 afaConfig)))
+    startSet = S.singleton (afaStartState afaConfig)
+    
+    finalStates = foldl step startSet w
+      where
+        step currentStates char = 
+            S.unions [ afaStepFunction afaConfig statePair char 
+                     | statePair <- S.toList currentStates ]
 
 ---------------------------------------------------------------------
 -- main
