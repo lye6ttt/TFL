@@ -308,7 +308,7 @@ generateByAFA config maxLength = generatePath (afaStartStates config) ""
                     chosenChar <- randomChoice commonChars
                     let nextStates1 = S.fromList [ ns | (c, ns) <- allPossible1, c == chosenChar ]
                     let nextStates2 = S.fromList [ ns | (c, ns) <- allPossible2, c == chosenChar ]
-                    let nextStates = S.union nextStates1 nextStates2
+                    let nextStates = S.intersection nextStates1 nextStates2
                     generatePath nextStates (path ++ [chosenChar])
 
 afa1, afa2 :: [(Int, Char, Int)]
@@ -386,7 +386,7 @@ main = do
     word1 <- generateByRegex
     word2 <- generateByDFA' maxLength
     word3 <- generateByNFA' maxLength
-    word4 <- generateByNFA' maxLength
+    word4 <- generateByAFA' maxLength
 
     let words = [word0, word1, word2, word3, word4]
 
