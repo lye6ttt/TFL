@@ -139,14 +139,8 @@ $$
 
 ### ПКА
 
-Т.к. исходное регулярное выражение можно представить в виде пересечения двух регулярных выражений
-$$
-    (aa|bb|cc)^* b(a|b)^* ((ab|bc|ccc)^* aa)^* abc(a|b|c)(b|\varepsilon)
-$$
-и
-$$
-    (aa|bb|cc)^* b(aaa|bbb)^* ((ab|bc|ccc)^* aa)^* ab(a|b|c|\varepsilon)(a|b|c|\varepsilon)(a|b|c|\varepsilon), 
-$$
+Т.к. исходное регулярное выражение можно представить в виде пересечения двух регулярных выражений:
+<img src="img/regAFA.png" width="1000" alt="regAFA"/>
 то возможно построить следующий ПКА:
 <img src="img/AFA.png" width="1000" alt="AFA"/>
 
