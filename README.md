@@ -143,6 +143,7 @@ $$
 $$
     (aa|bb|cc)^* b(a|b)^* ((ab|bc|ccc)^* aa)^* abc(a|b|c)(b|\varepsilon)
 $$
+и
 $$
     (aa|bb|cc)^* b(aaa|bbb)^* ((ab|bc|ccc)^* aa)^* ab(a|b|c|\varepsilon)(a|b|c|\varepsilon)(a|b|c|\varepsilon), 
 $$
