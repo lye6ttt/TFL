@@ -1,0 +1,91 @@
+digraph DPDA {
+	rankdir = LR
+	node [shape=doublecircle]
+	"" [shape = none]
+	"" -> 0
+	0 -> 1 [label="a"]
+	
+	1 -> 2 [label="a"]
+	1 -> 15 [label="b"]
+	
+	2 -> 3 [label="a, z0/Az0"]
+	2 -> 10 [label="b"]
+	
+	3 -> 9 [label="a, A/ε"]
+	3 -> 4 [label="b, x/Ax"]
+	
+	4 -> 4 [label="b, x/Ax"]
+	4 -> 5 [label="a, x/Ax"]
+	
+	5 -> 4 [label="b, x/Ax"]
+	5 -> 6 [label="a, A/ε"]
+	
+	6 [shape=circle]
+	6 -> 7 [label="b, A/ε"]
+	
+	7 [shape=circle]
+	7 -> 7 [label="b, A/ε"]
+	7 -> 8 [label="a, A/ε"]
+	7 -> 9 [label="ε, z0/z0"]
+
+  8 [shape=circle]
+	8 -> 7 [label="b, A/ε"]
+	8 -> 9 [label="ε, z0/z0"]
+
+	
+	
+	10 -> 11 [label="a"]
+	10 -> 13 [label="b"]
+	
+	11 -> 12 [label="a"]
+	11 -> 13 [label="b"]
+	
+	12 [shape=circle]
+	12 -> 9 [label="b"]
+	
+	13 -> 13 [label="b"]
+	13 -> 14 [label="a"]
+	
+	14 -> 13 [label="b"]
+	
+	
+	15 -> 16 [label="a, z0/Az0"]
+	15 -> 22 [label="b"]
+	
+	16 -> 17 [label="a, x/Ax"]
+	16 -> 18 [label="b, x/Bx"]
+	
+	17 -> 17 [label="a, x/Ax"]
+	17 -> 18 [label="b, x/Bx"]
+	
+	18 -> 18 [label="b, x/Bx"]
+	18 -> 19 [label="a, B/ε"]
+	
+	19 [shape=circle]
+	19 -> 20 [label="a, B/ε"]
+	19 -> 21 [label="b, B/ε"]
+	
+	20 [shape=circle]
+	20 -> 9 [label="ε, z0/z0"]
+	20 -> 20 [label="a, A/ε"]
+	20 -> 20 [label="a, B/ε"]
+	20 -> 21 [label="b, A/ε"]
+	20 -> 21 [label="b, B/ε"]
+	
+	21 [shape=circle]
+	21 -> 9 [label="ε, z0/z0"]
+	21 -> 21 [label="b, A/ε"]
+	21 -> 21 [label="b, B/ε"]
+	
+	
+	22 -> 9 [label="a"]
+	22 -> 23 [label="b"]
+	
+	23 -> 24 [label="a"]
+	23 -> 25 [label="b"]
+	
+	24 [shape=circle]
+	24 -> 9 [label="a, b"]
+	
+	25 -> 25 [label="b"]
+}

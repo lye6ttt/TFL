@@ -1,0 +1,319 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{geometry}
+\geometry{a4paper,tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+\sloppy
+
+% ==============================
+%            ПАКЕТЫ
+% ==============================
+\usepackage{cmap}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning, arrows.meta}
+\usepackage{amsmath}
+
+% ==============================
+%         ПЕРВЫЙ ЛИСТ
+% ==============================
+
+\author{Лиганкина Анна\\ Вариант 20}
+\title{Рубежный контроль №2}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% ==============================
+%          ЗАДАНИЕ 1
+% ==============================
+
+\section*{Задание 1}
+
+Дан язык SRS $bc \to cb, ac \to ccc$ над множеством базисных слов $a^nb^{n+k}c^k$. 
+Определить, является ли язык КС.
+
+\subsection*{Решение}
+
+Инварианты данной SRS:
+\begin{enumerate}
+    \item количество букв $b$ не меняется, т.е. остается $n+k$;
+    \item буквы $c$ могут двигаться относительно букв $b$ только влево;
+    \item количество букв $a$ уменьшается, причем число $2|w|_a + |w|_c = 2n+k$ постоянно (количество
+    $c$ может только увеличиваться на 2 за счет одной буквы $a$).
+\end{enumerate}
+Поэтому данный язык можно представить как:
+\begin{enumerate}
+    \item В случае, если правило $ac \to ccc$ еще не было применено:
+    \[
+        L_1 = \{ w \;\Big|\; w = a^n z \;\&\; z = (b|c)^* \;\&\; |z|_b = n+k \;\&\; |z|_c = k \}
+    \]
+    \item Если правило $ac \to ccc$ было применено хотя бы раз:
+    \[
+        L_2 = \{ w \;\Big|\; w = a^{n-i}c^{2i+1}z \;\&\; z = (b|c)^* \;\&\; 
+        |z|_b = n+k \;\&\; |z|_c = k-1 \;\&\; 
+    \]\[
+        i, k \geq 1 \;\&\; n \geq i \}
+    \]
+\end{enumerate}
+Таким образом, исходный язык SRS $L = L_1 \cup L_2$. Поскольку КС языки замкнуты относительно
+объединения, для доказательства того, что $L$ - КС, достаточно показать, что $L_1$ и $L_2$ - КС.
+
+\subsubsection*{Язык $L_1$}
+
+\[
+    L_1 = \{ w \;\Big|\; w = a^n z \;\&\; z = (b|c)^* \;\&\; |z|_b = n+k \;\&\; |z|_c = k \}
+\]
+
+Для $L_1$ можно построить недетеминированный PDA $\Rightarrow L_1$ - КС: 
+\begin{center}
+\begin{tikzpicture}[
+    ->, >=Stealth, node distance=3cm, 
+    every state/.style={thick, fill=gray!10, minimum size=1cm},
+    initial text={},
+    every edge/.style={draw, thick}
+    ]
+    
+    \node[state, initial] (0) {};
+    \node[state, right of=0] (1) {};
+    \node[state, right of=1] (2) {};
+    \node[state, accepting, right of=2] (3) {};
+    \node[state, below=2.5cm of 3] (4) {};
+    
+    \node[left=1.5cm of 0] (start) {};
+    
+    \path (0) edge [bend left=20] node[above, sloped] {$a, z_0/Az_0$} (1);
+    \path (0) edge [bend right=40] node[below, sloped] {$c, z_0/Az_0$} (2);
+    \path (0) edge [bend right=30] node[below, sloped] {$b, z_0/Az_0$} (4);
+    
+    \path (1) edge [loop above] node[above] {$a, x/Ax$} (1);
+    \path (1) edge [bend left=15] node[above, sloped] {$b, A/\varepsilon$} (2);
+    \path (1) edge [bend right=5] node[below, sloped, pos=0.4] {$c, x/Ax$} (2);
+    
+    \path (2) edge [loop above] node[above] {$b, A/\varepsilon$} (2);
+    \path (2) edge [loop below] node[below] {$c, x/Ax$} (2);
+    \path (2) edge [bend left=15] node[above, sloped] {$\varepsilon, z_0/z_0$} (3);
+    
+    \path (3) edge [bend left=5] node[below, sloped, pos=0.4] {$c, z_0/Az_0$} (2);
+    \path (3) edge [bend right=15] node[left, yshift=-20pt] {$b, z_0/Az_0$} (4);
+    
+    \path (4) edge [loop right] node[right] {$c, A/\varepsilon$} (4);
+    \path (4) edge [loop below] node[below] {$b, x/Ax$} (4);
+    \path (4) edge [bend right=15] node[right] {$\varepsilon, z_0/z_0$} (3);
+    
+    \draw[->, thick] (start) -- (0);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection*{Язык $L_2$}
+
+Для удобства во втором случае переобозначим $n = n - i, k = k - 1$. Тогда
+\[
+    L_2 = \{ w \;\Big|\; w = a^n c^{2i+1}z \;\&\; z = (b|c)^* \;\&\; |z|_b = n+k+i+1 \;\&\; |z|_c = k
+\]\[
+    \;\&\; i > 0 \;\&\; n, k \geq 0 \}
+\]
+Для $L_2$ можно построить недетеминированный PDA $\Rightarrow L_2$ - КС: 
+\begin{center}
+\begin{tikzpicture}[
+    ->, >=Stealth, node distance=3cm, 
+    every state/.style={thick, fill=gray!10, minimum size=1cm},
+    initial text={},
+    every edge/.style={draw, thick}
+    ]
+    
+    \node[state, initial] (0) {};
+    \node[state, above=1cm of 0] (1) {};
+    \node[state, right=1cm of 1] (2) {};
+    \node[state, right=1.5cm of 2] (3) {};
+    \node[state, right=1.5cm of 3] (4) {};
+    \node[state, right=1.5cm of 4] (5) {};
+    \node[state, below=1.5cm of 5] (6) {};
+    \node[state, accepting, left=2.5cm of 6] (7) {};
+    \node[state, left=2.5cm of 7] (8) {};
+    
+    \node[left=1.5cm of 0] (start) {};
+    
+    \path (0) edge [bend left=15] node[left] {$a, z_0/Az_0$} (1);
+    \path (0) edge [bend right=0] node[left] {$c$} (2);
+    
+    \path (1) edge [loop above] node[above] {$a, x/Ax$} (1);
+    \path (1) edge [bend left=15] node[above] {$c$} (2);
+    
+    \path (2) edge [bend left=15] node[above, sloped] {$c, x/Ax$} (3);
+    
+    \path (3) edge [bend right=15] node[below] {$c$} (4);
+    
+    \path (4) edge [bend right=15] node[above] {$c, x/Ax$} (3);
+    \path (4) edge [bend left=15] node[above, sloped] {$c, x/Ax$} (5);
+    \path (4) edge [bend right=0] node[right, xshift=-15pt, yshift=20pt] {$b$} (6);
+    
+    \path (5) edge [bend left=70] node[right] {$b$} (6);
+
+    \path (6) edge [loop above] node[above] {$c, x/Ax$} (1);
+    \path (6) edge [loop below] node[right, xshift=5pt, yshift=10pt] {$b, A/\varepsilon$} (6);
+
+    \path (6) edge [bend right=15] node[above] {$\varepsilon, z_0/z_0$} (7);
+    \path (7) edge [bend right=15] node[below] {$c, z_0/Az_0$} (6);
+
+    \path (8) edge [bend left=15] node[above] {$\varepsilon, z_0/z_0$} (7);
+    \path (7) edge [bend left=15] node[below] {$b, z_0/Az_0$} (8);
+    \path (8) edge [loop above] node[above] {$b, x/Ax$} (8);
+    \path (8) edge [loop below] node[left, xshift=-7pt, yshift=10pt] {$c, A/\varepsilon$} (8);
+    
+    \draw[->, thick] (start) -- (0);
+\end{tikzpicture}
+\end{center}
+Таким образом, язык $L_1$ и $L_2$ - КС, а значит, $L$ - КС. При этом для определения принадлежности
+слова языку обязателен счетчик $\Rightarrow$ язык нерегулярный.\\
+\textbf{Ответ}: контекстно-свободный, нерегулярный.
+
+
+% ==============================
+%          ЗАДАНИЕ 2
+% ==============================
+
+\section*{Задание 2}
+
+Дан язык $\{ w_1w_2 \;\Big|\; |w_1| > 1 \;\&\; w_2 = z_1w_1^Rz_2 \;\&\; |z_1| \neq |z_2| \}$.
+Определить, является ли он DCFL. Если да, то исследовать на LL-свойства.
+
+\subsection*{Решение}
+
+Поскольку длина $|w|$ не фиксирована, и т.к. если $w^R$ содержится в слове, то для любой подстроки $w$
+существует как подстрока слова $w^R$ ее реверс, можно ограничиться рассмотрением в качестве $w$ только
+первых двух букв. Однако возникают следующие ситуации:
+\begin{enumerate}
+    \item $\underbrace{ab}_{w}aa\underbrace{ba}_{w^R}ba$, хотя у слова есть разбиение 
+    $\underbrace{ab}_{w}aaba\underbrace{ba}_{w^R}$. Поэтому, если в слове несколько раз встречается 
+    реверс первых двух букв (причем с перекрытиями), то слово автоматически принадлежит языку (т.к.
+    хотя бы одно из разбиений будет подходить критерию $|z_1| \neq |z_2|$).
+
+    \item $\underbrace{ab}_{w}a^n\underbrace{ba}_{w}a^n, n \geq 2$ - $ba$ встречается лишь один раз, но
+    существует разбиение \\
+    $\underbrace{aba}_{w}a^{n-2}\underbrace{aba}_{w}a^n \Rightarrow w \in L$. Таким образом, еще одна 
+    необходимая проверка в слове - наличие реверса первых трех букв. Если это условие выполнено, то 
+    слово автоматически принадлежит языку.
+\end{enumerate}
+
+Поскольку DCFL замкнуты относительно дополнения, то построим язык $L'$ слов, не принадлежащих $L$.
+Нам подходят слова из алфавита $\{a, b\}^*$ такие, что в остатке слова либо не встречается реверс
+двух первых букв, либо встречается один раз, причем предшествующая им буква не совпадает с третьей,
+и длины отсекаемых слов равны.
+Половина DPDA - в файле DPDA.dot/DPDA.svg. Остальная часть - зеркальная (аналогично)
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\linewidth]{dpda.png}
+\end{figure}
+
+Таким образом, язык $L$ - DCFL. Исследуем теперь язык на LL-свойства.
+\\
+
+Язык $L$ не является LL, что доказывается по методу неожиданного конца:
+\\
+Возьмем префикс длины $> N$: $x = aa b^{N+k} aa$ ($N$ такое, что после чтения $N$ букв $b$ в стеке не 
+меньше $k+3$ стековых символов). Также языку принадлежит слово с тем же префиксом $x$ и суффиксом 
+$b^{N+k+1}$. За чтение $b^{k}aa$ израсходуется не более $k + 2$ стековых символа, а значит, для
+слова с префиксом $x$ и суффиксом $\varepsilon$ стек окажется непустым $\Rightarrow$ язык не LL(k).
+\\
+\textbf{Ответ}: DCFL, не LL(k).
+
+
+% ==============================
+%          ЗАДАНИЕ 3
+% ==============================
+\newpage
+
+\section*{Задание 3}
+
+Дана атрибутная грамматика:\\
+\[
+\begin{array}{rclll}
+S & \to & TbS         & ; & S_0.a := S_1.a + 1, \; S_1.a == T.a \\
+S & \to & T           & ; & S.a := T.a \\
+T & \to & aTa         & ; & T_0.a := T_1.a + 1 \\
+T & \to & bT          & ; & T_0.a := T_1.a \cdot 2 \\
+T & \to & bbT         & ; & T.a := 0 \\
+T & \to & aTa         & ; & T_0.a := T_1.a + 2 \\
+T & \to & \varepsilon & ; & T.a := 0
+\end{array}
+\]
+Определить, является ли язык КС.
+
+\subsection*{Решение}
+
+Докажем, что пересечение языка $L$, порожденного данной атрибутной грамматикой, с регулярным языком
+\[
+    R = aaaa \; (aa)^* b^+ \; aa
+\]
+или по-другому
+\[
+    R = \{ a^{2p} b^q aa, p \geq 2, q \geq 1 \}
+\]
+не является контекстно-свободным, а значит, и $L$ не является КС.\\
+$L_R = L \cap R$ имеет вид:
+\[
+\begin{array}{rclll}
+S & \to & TbT         & ; & T_1.a == T_2.a \\
+T & \to & aTa         & ; & T_0.a := T_1.a + 1 \\
+T & \to & bT          & ; & T_0.a := T_1.a \cdot 2 \\
+T & \to & bbT         & ; & T.a := 0 \\
+T & \to & aTa         & ; & T_0.a := T_1.a + 2 \\
+T & \to & \varepsilon & ; & T.a := 0
+\end{array}
+\]
+Обоснование. (От противного). Пусть $w \in L_R$ порождено правилом $S \to T$. Тогда, т.к. в начале стоит
+минимум 4 буквы $a$, то применяется правило $T \to aTa$ минимум 4 раза, что невозможно, поскольку
+в конце стоит только 2 буквы $a$ подряд. Поэтому имеем четкое разбиение $w$ по правилу $S \to TbS$, где 
+$T = aaaa \; a^*$, а $S = b^+aa$. 
+\\\\
+При этом последняя $S$ может быть раскрыта только по правилу $S \to T$, потому что если предположить, 
+что  $S \to TbS$, то $T$ содержит только $b^*$, а значит, атрибут $a$ для этого $T$ равен 0. Поэтому 
+(при любом представлении $S = b^* aa$) вес этого слова должен быть равен 0. Таким образом, $w$ не
+принадлежит языку, поскольку вес левой части $T$ точно больше 0.
+\\\\
+По этой же причине нужно рассматривать блок $b^*$ в качестве применения правила $T \to bT$, которое
+умножает атрибут $a$ (иначе опять уйдем в 0). Получается, что значения атрибута $a$ оценивается так
+(с учетом правила $S \to T_1bT_2$):
+\begin{itemize}
+    \item для $T_1:$ $2 \leq p \leq T_1.a \leq 2p$;
+    \item для $T_2:$ $2 \leq 2^{q - 1} \leq T_2.a \leq 2^{q - 1} \cdot 2$
+\end{itemize}
+Таким образом, $T_1.a = T_2.a \Leftrightarrow$
+\[
+\begin{cases}
+    2^{q - 1} \leq 2p        & p \geq 2^{q - 2} \\
+    p \leq 2^{q - 1} \cdot 2 & p \leq 2^q
+\end{cases}
+\Leftrightarrow 2^ {q - 1} \leq 2p \leq 2^{q + 1}
+\]
+Т.е. $L_R = \{a^{2p}b^qaa \;\Big|\; p \geq 2 \;\&\;  2^ {q - 1} \leq 2p \leq 2^{q + 1} \}$. Теперь
+воспользуемся леммой о накачке:
+\\
+Возьмем слово $w = a^{2^{q-1}}b^qaa$, где $q > N$ - длина накачки. Рассмотрим разбиение $w = uvxyz$,
+где $|vxy| < N$:
+\begin{itemize}
+    \item $vxy \subset a^{2p}$: при отрицательной накачке ($k = 0$) выходим из языка, т.к. получаем 
+    слово $a^{2p - t}b^qaa$, где $2p = 2^{q-1}, t > 0$;
+
+    \item $vxy \subset b^q$: при любой положительной накачке ($k > 0$) выходим из языка, т.к. нарушается
+    условие $2^{q-1} = 2p \geq 2^{q+t-1}$;
+
+    \item $vxy$ попадает на стык $a^{2p}$ и $b^q$: число накачиваемых букв $a$ меньше $N$, а значит
+    новое число букв $a < N \cdot k$, а в части $b^q$ накачивается хотя бы 1 буква, поэтому новое число
+    букв $b \geq q + 1$. Получается, новое число букв $a$
+    \[
+        2^{q-1} + N \cdot k < 2^{q-1} + q \cdot k \;\text{ т.к.}\; (q > N) < 2^{q-1} + 2^{q-1} \cdot k 
+        \leq 2^q
+    \]
+    и мы выходим из языка;
+
+    \item $vxy$ не может задеть блок $aa$, потому что это автоматически выводит из языка.
+\end{itemize}
+Таким образом, согласно лемме о накачке, язык $L_R$ не является КС, а значит, и исходный язык не является КС.
+\\
+\textbf{Ответ}: не контекстно-свободный.
+\end{document}
