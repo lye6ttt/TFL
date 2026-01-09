@@ -1,3 +1,7 @@
+----------------------------
+-- наивный парсер
+----------------------------
+
 naiveParse :: String -> Bool
 naiveParse s = go (s ++ "$") 0 ""
   where
@@ -39,6 +43,59 @@ acceptTail s index x y = check index 0
       | s !! i /= lookahead !! j || s !! i /= tailStr !! j           = False
       | otherwise = check (i + 1) (j + 1)
 
+
+----------------------------
+-- оптимизированный парсер
+----------------------------
+
+optimizedParse :: String -> Bool
+optimizedParse s =
+  let n = length s
+  in if even n
+     then False
+     else
+       let l0 = (n - 3) `div` 2
+           s' = s ++ "$"
+       in parseX s' 0 "" l0
+
+
+parseX :: String -> Int -> String -> Int -> Bool
+parseX s i x l
+  | s !! i == '$' = False
+  | s !! i == 'c' =
+      if l < 0 || x /= reverse x
+      then False
+      else parseY s (i + 1) x "" l
+  | otherwise =
+      parseX s (i + 1) (x ++ [s !! i]) (l - 1)
+
+
+parseY :: String -> Int -> String -> String -> Int -> Bool
+parseY s i x y l
+  | l > 0 =
+      parseY s (i + 1) x (y ++ [s !! i]) (l - 1)
+  | otherwise =
+      if y /= reverse y
+      then False
+      else
+        let lookahead = x ++ "ab" ++ y
+            tailStr   = y ++ "ba" ++ x
+        in if lookahead /= reverse lookahead
+              || tailStr /= reverse tailStr
+           then False
+           else parseTail s i lookahead tailStr 0
+
+
+parseTail :: String -> Int -> String -> String -> Int -> Bool
+parseTail s i lookahead tailStr l
+  | s !! i == '$' = True
+  | s !! i /= lookahead !! l || s !! i /= tailStr !! l = False
+  | otherwise =
+      parseTail s (i + 1) lookahead tailStr (l + 1)
+
+
+
 main :: IO ()
 main = do
     putStrLn $ show (naiveParse "bababbababcbababbababbabababbabab")
+    putStrLn $ show (optimizedParse "bababbababcbababbababbabababbabab")
