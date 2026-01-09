@@ -1,3 +1,83 @@
+import System.Random (randomRIO)
+import Data.List (reverse)
+import System.CPUTime
+import Text.Printf
+import Control.DeepSeq
+
+----------------------------
+-- генерация случайных слов
+----------------------------
+
+alphabet :: [Char]
+alphabet = ['a', 'b']
+
+maxAttempts :: Int
+maxAttempts = 15
+
+genRandomChar :: IO Char
+genRandomChar = do
+  i <- randomRIO (0, length alphabet - 1)
+  return (alphabet !! i)
+
+genRandomWord :: Int -> IO String
+genRandomWord n = sequence (replicate n genRandomChar)
+
+genPalindrom :: Int -> IO String
+genPalindrom len = do
+  x <- genRandomWord (len `div` 2)
+  if even len
+    then return (x ++ reverse x)
+    else do
+      c <- genRandomChar
+      return (x ++ [c] ++ reverse x)
+
+uglifizeWord :: String -> IO String
+uglifizeWord [] = return []
+uglifizeWord s = do
+  i <- randomRIO (0, length s - 1)
+  let (prefix, c:suffix) = splitAt i s
+      c' = if c == 'b' then 'a' else 'b'
+  return (prefix ++ c' : suffix)
+
+
+-- подходящих языку
+genValid :: Int -> IO String
+genValid n0 = do
+  let n = if even n0 then n0 + 1 else n0
+      lengthXY = (n - 3) `div` 2
+  lenX <- randomRIO (0, lengthXY)
+  let lenY = lengthXY - lenX
+
+  let attempt 0 = do
+        r <- randomRIO (0, 1 :: Int)
+        return $
+          if r == 0
+            then replicate lenX 'a' ++ "c" ++ replicate (2 * lenY) 'a' ++ "ba" ++ replicate lenX 'a'
+            else replicate lenX 'b' ++ "c" ++ replicate (2 * lenY) 'b' ++ "ba" ++ replicate lenX 'b'
+      attempt k = do
+        x <- genPalindrom lenX
+        y <- genPalindrom lenY
+        if x ++ "ab" ++ y == y ++ "ba" ++ x
+          then return (x ++ "c" ++ y ++ y ++ "ba" ++ x)
+          else attempt (k - 1)
+
+  attempt maxAttempts
+
+-- неподходящих языку
+genInvalid :: Int -> IO String
+genInvalid n = do
+  randommaker <- randomRIO (0, 1 :: Int)
+  case randommaker of
+    0 -> do
+      v <- genValid n
+      uglifizeWord v
+    1 -> do
+      lenX <- randomRIO (0, (n - 3) `div` 2)
+      x <- genPalindrom lenX
+      y <- genRandomWord ((n - 3) `div` 2 - lenX + 1)
+      return (take n (x ++ "c" ++ y ++ y ++ "ba" ++ x))
+
+
 ----------------------------
 -- наивный парсер
 ----------------------------
@@ -94,8 +174,37 @@ parseTail s i lookahead tailStr l
       parseTail s (i + 1) lookahead tailStr (l + 1)
 
 
+----------------------------
+-- замер времени
+----------------------------
+
+timeIt :: NFData a => String -> a -> IO ()
+timeIt label expr = do
+    start <- getCPUTime
+    expr `deepseq` return ()
+    end <- getCPUTime
+    let diff = fromIntegral (end - start) / (10^12)
+    printf "%s: %.6f sec\n" label (diff :: Double)
+
+
+benchmark :: Int -> Int -> IO ()
+benchmark count l = do
+    valid   <- sequence [genValid l   | _ <- [1..count]]
+    invalid <- sequence [genInvalid l | _ <- [1..count]]
+
+    putStrLn $ "\n=== VALID WORDS " ++ show l ++ " LENGTH ==="
+    timeIt "naive parser"     (map naiveParse valid)
+    timeIt "optimized parser" (map optimizedParse valid)
+
+    putStrLn $ "\n=== INVALID WORDS " ++ show l ++ " LENGTH ==="
+    timeIt "naive parser"     (map naiveParse invalid)
+    timeIt "optimized parser" (map optimizedParse invalid)
+
 
 main :: IO ()
 main = do
-    putStrLn $ show (naiveParse "bababbababcbababbababbabababbabab")
-    putStrLn $ show (optimizedParse "bababbababcbababbababbabababbabab")
+    benchmark 3 501
+    benchmark 3 1001
+    benchmark 3 2001
+    benchmark 3 3001
+    benchmark 3 4001
