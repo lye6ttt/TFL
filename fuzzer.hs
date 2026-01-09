@@ -205,6 +205,6 @@ main :: IO ()
 main = do
     benchmark 3 501
     benchmark 3 1001
+    benchmark 3 1501
     benchmark 3 2001
-    benchmark 3 3001
-    benchmark 3 4001
+    benchmark 3 2501
