@@ -201,10 +201,35 @@ benchmark count l = do
     timeIt "optimized parser" (map optimizedParse invalid)
 
 
+----------------------------
+-- фаззинг
+----------------------------
+
+fuzzing :: Int -> Int -> IO ()
+fuzzing count l = do
+  valid   <- sequence [genValid l   | _ <- [1..count]]
+  invalid <- sequence [genInvalid l | _ <- [1..count]]
+  let samples = zip (repeat "VALID") valid ++ zip (repeat "INVALID") invalid
+
+  let go :: Int -> [(String, String)] -> IO ()
+      go _ [] = putStrLn $ "OK: parsers are equivalent on " ++ show (2 * count)
+                        ++ " samples (length=" ++ show l ++ ")"
+      go k ((tag,w):ws) = do
+        let r1 = naiveParse w
+            r2 = optimizedParse w
+        if r1 == r2
+          then go (k + 1) ws
+          else do
+            putStrLn $ "OH NO ERROR on sample #" ++ show k ++ " (" ++ tag ++ ")"
+            putStrLn $ "word = " ++ w
+            putStrLn $ "naiveParse      = " ++ show r1
+            putStrLn $ "optimizedParse  = " ++ show r2
+            error "fuzzing failed: parsers are not equivalent"
+
+  go 1 samples
+
+
+
 main :: IO ()
 main = do
-    benchmark 3 501
-    benchmark 3 1001
-    benchmark 3 1501
-    benchmark 3 2001
-    benchmark 3 2501
+    fuzzing 100 501
