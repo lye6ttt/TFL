@@ -105,6 +105,7 @@ yPredict s index x yLen =
     takeY str i 0 = ("", i, True)
     takeY str i n
       | str !! i == '$' = ("", i, False)
+      | str !! i == 'c' = ("", i, False)
       | otherwise =
           let (ys, j, ok) = takeY str (i + 1) (n - 1)
           in (str !! i : ys, j, ok)
@@ -152,6 +153,7 @@ parseX s i x l
 
 parseY :: String -> Int -> String -> String -> Int -> Bool
 parseY s i x y l
+  | 'c' `elem` y = False
   | l > 0 =
       parseY s (i + 1) x (y ++ [s !! i]) (l - 1)
   | otherwise =
