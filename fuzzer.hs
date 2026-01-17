@@ -157,13 +157,12 @@ parseY s i x y l
   | l > 0 =
       parseY s (i + 1) x (y ++ [s !! i]) (l - 1)
   | otherwise =
-      if y /= reverse y
+      if y /= reverse y || length x == length y
       then False
       else
         let lookahead = x ++ "ab" ++ y
             tailStr   = y ++ "ba" ++ x
         in if lookahead /= reverse lookahead
-              || tailStr /= reverse tailStr
            then False
            else parseTail s i lookahead tailStr 0
 
