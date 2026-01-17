@@ -126,12 +126,77 @@ $\in L$:
 Оптимизация парсера происходит за счет следующего:
 \begin{itemize}
     \item если длина слова четна, то слово автоматически не подходит языку;
-    \item длина $y$ однозначно вычисляется по формуле (длина слова - 3)/2 - длина 
-    $x$, благодаря чему алгоритмическая сложность парсера - $o(n)$, где $n$ - длина 
+    \item длина $y$ однозначно вычисляется по формуле <<(длина слова - 3)/2 - длина 
+    $x$>>, благодаря чему алгоритмическая сложность парсера - $o(n)$, где $n$ - длина 
     входного слова;
     \item слова $x$ и $y$ являются палиндромами, а также $xaby$ и $ybax$, так как
     $xaby = ybax$.
 \end{itemize}
+
+\subsection*{Доказательство того, что если $xaby = ybax$, то $x, y$ и $xaby = ybax$ -
+палиндромы.}
+
+Докажем по индукции (по длине $|x| + |y|$).\\
+\textbf{База индукции}. Пусть $x = \varepsilon$. Тогда $aby = yba \Rightarrow y \not
+= \varepsilon$. Т.к. левая часть начинается с $a$, то $y = ay_1$. Тогда
+\[
+    abay_1 = ay_1ba \Rightarrow bay_1 = y_1ba
+\]
+Отсюда, либо $y_1 = \varepsilon$, либо $y_1$ начинается на $b$, т.е. $y_1 = by_2$
+\[
+    baby_2 = by_2ba \Rightarrow aby_2 = y_2ba
+\]
+Далее, $y_2 \not = \varepsilon$ и начинается на $a$, т.е. $y_2 = ay_3$ и т.д. 
+Получаем, что $y = a(ba)^k, k \geq 0$ - палиндром.
+\\
+Аналогично, если $y = \varepsilon$, то $x = b(ab)^k, k \geq 0$ - палиндром.
+\\
+\textbf{Шаг индукции}. Пусть $x \not = \varepsilon$ и $y \not = \varepsilon$. Пусть
+\[
+    w = xaby = ybax
+\]
+Тогда более короткое слово из $x, y$ является префиксом другого (при этом $|x| \not =
+|y|$, т.к. получится, что $ab = ba$). 2 случая:
+\begin{enumerate}
+    \item $|x| < |y|$. Тогда $x$ является префиксом $y$, т.е. $y = xy_1$, где $y_1
+    \not = \varepsilon$.
+    \[
+        xabxy_1 = xy_1bax \Rightarrow abxy_1 = y_1bax
+    \]
+    А значит, $y_1$ начинается с $a$, т.е. $y_1 = ay_2$
+    \[
+        abxay_2 = ay_2bax \Rightarrow bxay_2 = y_2bax
+    \]
+    Здесь также 2 случая:
+    \begin{enumerate}
+        \item $y_2 = \varepsilon$. Тогда $y = xa$ и
+        \[
+            bxa = bax \Rightarrow xa = ax \Rightarrow x = a^n, y = a^{n+1},
+        \]
+        и $x, y$ - палиндромы; $w = a^naba^{n+1} = a^{n+1}baa^n = a^{n+1}ba^{n+1}$ -
+        палиндром.
+
+        \item $y_2 = by_3$. Тогда $y = xaby_3$ и
+        \[
+            bxaby_3 = by_3bax \Rightarrow xaby_3 = y_3bax
+        \]
+        Мы пришли к тому же уравнению вида $xaby = ybax$, но длина $|x| + |y_3|$
+        уменьшилась $\Rightarrow$ по предположению индукции $x, y_3$ и $xaby_3 = 
+        y_3bax$ - палиндромы. Отсюда $y = xaby_3$ - палиндром и 
+        \[
+            w^R = (xaby)^R = x^R (ab)^R y^R = (x = x^R, y = y^R) =  x ba y = w,
+        \]
+        т.е. $w$ - палиндром.        
+    \end{enumerate}
+
+    \item $|y| < |x|$ - симметричная ситуация. Тогда $y$ является префиксом $x$, т.е. 
+    $x = yx_1$, где $x_1 \not = \varepsilon$. И 2 аналогичных исхода:
+    \begin{enumerate}
+        \item $x = b^{n+1}, y = b^n$ и $w = b^{n+1}abb^n = b^nbab^{n+1}$ - палиндромы.
+        \item $x = ybax_3, y$ и $w$ - палиндромы.
+    \end{enumerate}
+\end{enumerate}
+Таким образом, $x, y$ и $w$ - палиндромы.
 
 % ==============================
 %     ОЦЕНКА ЭФФЕКТИВНОСТИ
@@ -182,5 +247,4 @@ $\in L$:
 \addlegendentry{Слова $\not \in L$}
 \end{axis}
 \end{tikzpicture}
-
 \end{document}
